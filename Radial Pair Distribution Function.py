@@ -6,20 +6,21 @@ import matplotlib.pyplot as plt
 
 print("|-----------------------------------------------------| \r\n|----------------------B.E.L.L.O----------------------| \r\n|---------Bond Element Lattice Locality Order---------|\r\n|-----------------------------------------------------|\r\n|----------Radial Pair Distribution Function----------|")
 
-f = pd.read_fwf('aaa.xyz',header=None)
+f = pd.read_fwf('traj.xyz',header=None)
 f= f.fillna("x") 
 file = np.array(f)
 Natom=int(f[0][0])
 #emptylist=[" "," "," "," "]
-celldm=20.644848284633
-#celldm=float(input('Enter lattice constant (in Ang): '))
-#fat=str(input('Name of the first atom: '))
-#sat=str(input('Name of the second atom: '))
-#limit=float(input('Maximum range: '))
-fat="Ge"
-sat="Te"
-rmax=10
-dr=0.1
+#celldm=20.644848284633
+celldm=float(input('Enter lattice constant (in Ang): '))
+fat=str(input('First element: '))
+sat=str(input('Second element: '))
+rmax=int(input('Maximum range(integer): '))
+dr=float(input('delta r: '))
+#fat="Ge"
+#sat="Te"
+#rmax=10
+#dr=0.1
 
 div=10
 intervals=1/dr
@@ -34,7 +35,8 @@ print("File lenght is: ",lfile)
 fa= np.empty((0,4), int)
 zerocenter=[0,0,0]
 templist=[]
-
+Nframes= len(f)/(Natom+2) #number of frames
+print("Number of frames: ",Nframes)
 #------------------------------------
 #------boundry condition-------------
 #------------------------------------
@@ -47,9 +49,22 @@ for i in range(lfile):
 		if file[i,3]>celldm or file[i,3]<0:
 			file[i,3]= file[i,3]%celldm
 		fa= np.vstack((fa, file[i]))
-print("Boundry Condition is done! \r\nCalculating local orders:")
+print("Boundry Condition is done! \r\nCalculating Radial Pair Distribution Function:")
 
+def distance(a, b):
+	dx = abs(a[0] - b[0])
+	x = min(dx, abs(A - dx))
+	
+	dy = abs(a[1] - b[1])
+	y = min(dy, abs(B - dy))
+	
+	dz = abs(a[2] - b[2])
+	z = min(dz, abs(C - dz))
 
+	return mt.sqrt(x**2 + y**2 + z**2)
+
+A=B=C=celldm
+totalRDF=[]
 #-------------------------------------
 #---looping over the atoms of a frame-
 #-------------------------------------
@@ -61,8 +76,6 @@ for N in range(0,len(fa),Natom):
 	natm1=0
 	natm2=0
 	fo=np.copy(fa[N:N+Natom])
-	#fi=[]
-#	fi=np.copy(fa[N:N+Natom])
 	lfo=len(fo)
 	g=[]
 	d=10 #d >= 2
@@ -71,19 +84,7 @@ for N in range(0,len(fa),Natom):
 			natm1 += 1
 		if fo[l,0]==sat:
 			natm2 += 1
-	def distance(a, b):
-		dx = abs(a[0] - b[0])
-		x = min(dx, abs(A - dx))
-		
-		dy = abs(a[1] - b[1])
-		y = min(dy, abs(B - dy))
-		
-		dz = abs(a[2] - b[2])
-		z = min(dz, abs(C - dz))
 
-		return mt.sqrt(x**2 + y**2 + z**2)
-
-	A=B=C=celldm
 
 	for c in range (0,lfo):
 		if fo[c,0] == fat:
@@ -114,16 +115,16 @@ for N in range(0,len(fa),Natom):
 				rdf_hist[i] += 1 
 				
 	for i in range(n):
-		#rdf_hist[i] /= area[i]
 		rdf_hist[i] /= natm1
 		rdf_hist[i] /= density 
 		rdf_hist[i] /= vol[i]-vol[i-1]
-		
-print(len(fi))
-finalfile= np.column_stack((r,rdf_hist))
+	totalRDF.append(rdf_hist)
 
-np.savetxt('RPDF.txt', finalfile, delimiter=',', fmt="%s")
-np.savetxt('RPDF-xyz.txt', fi, delimiter=' ', fmt="%s")
+rdf=sum(totalRDF)/Nframes
+print(len(fi))
+finalfile= np.column_stack((r,rdf))
+
+np.savetxt('RPDF.txt', finalfile, delimiter=' ', fmt="%s")
 
 plt.plot(r,rdf_hist,label='radial distribution function')
 plt.xlabel('radius (Angstroms)')
