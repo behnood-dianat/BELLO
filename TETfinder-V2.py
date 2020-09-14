@@ -9,19 +9,24 @@ import pandas as pd
 
 print("|-----------------------------------------------------| \r\n|----------------------B.E.L.L.O----------------------| \r\n|---------Bond Element Lattice Locality Order---------|\r\n|-----------------------------------------------------|")
 #Natom= int(input('Enter the number of atoms: '))
-Natom=336
-f = pd.read_fwf('traj.xyz',header=None)
+Natom=270
+f = pd.read_fwf('aaa.xyz',header=None)
 f= f.fillna("x") #fill the empty spaces with X so that we can clean/organize them before analysis
 file = np.array(f)
 
 #emptylist=[" "," "," "," "]
-#celldm=20.644848284633
+
+trhld=3.0
+
+tlrnc=2e-1
+
+celldm=celldmx=celldmy=celldmz=20.644848284633
 #celldm=float(input('If your unitcell is cubic, then enter the lattice constant in Ang: '))
-celldmx=19.12116
-celldmy=19.38795
-celldmz=21.45236
-lfile=len(file)
-print("File lenght is: ",lfile)
+#celldmx=19.12116
+#celldmy=19.38795
+#celldmz=21.45236
+lfole=len(file)
+print("File lenght is: ",lfole)
 
 #------------------------------------
 #-----variables and empy lists-------
@@ -34,7 +39,7 @@ coordinates=[]#= np.empty((0,4), int) #human readable coordinates
 mcoordinates= [] #np.empty([5000000,4], int) #standard xyz coordinates
 pdbcoords=[]#= np.empty([], str) # Pdb format output
 angle=[]#= np.empty([],str) # angle distribution
-localstats=[] #np.empty([lfifile,6], int) # output for statistics on local orders
+localstats=[] #np.empty([lfofile,6], int) # output for statistics on local orders
 localstats.append(["3-FOLD","4-FOLD","TETRAHEDRAL","5-FOLD","OCTAHEDRAL","Total"])# np.append(localstats, [["3-FOLD","4-FOLD","TETRAHEDRAL","5-FOLD","OCTAHEDRAL","Total"]], axis=0)
 tPDB= "PDB coordinates"
 pdbcoords.append([tPDB])#= np.vstack((pdbcoords, tPDB))
@@ -45,10 +50,29 @@ qtetframe=[]
 q5flframe=[]
 q6flframe=[]
 tetatot=[]
+
 #------------------------------------
-#------boundry condition-------------
+#------boundry condition #1----------
 #------------------------------------
-for i in range(lfile):
+
+def distance(a, b):
+	dx = abs(a[0] - b[0])
+	x = min(dx, abs(A - dx))
+
+	dy = abs(a[1] - b[1])
+	y = min(dy, abs(B - dy))
+
+	dz = abs(a[2] - b[2])
+	z = min(dz, abs(C - dz))
+
+	return mt.sqrt(x**2 + y**2 + z**2)
+
+A=B=C=celldm
+
+#------------------------------------
+#------boundry condition #2----------
+#------------------------------------
+for i in range(lfole):
 	if (file[i,1] != 'x'):
 		if file[i,1]>celldmx or file[i,1]<0:
 			file[i,1]= file[i,1]%celldmx
@@ -67,9 +91,7 @@ for N in range(0,len(fa),Natom):
 	fo=[]
 	fi=[]
 	fo=np.copy(fa[N:N+Natom])
-	fi=np.copy(fa[N:N+Natom])
 	lfo=len(fo)
-	lfi=len(fi)
 	q=[]
 	q3fl=[]
 	q4fl=[]
@@ -85,193 +107,182 @@ for N in range(0,len(fa),Natom):
 	noct=0   # number of OCTAHEDRALs
 	condition='false' #this is an on-off switch for when we calculate the q, to tell the code to jump back up to selecting b1
 	for c in range (0,lfo):  #in here we select the point which will be the center of tetrahedral
-		#print("center is", fo[c])
-		#print("fo is:", fo)
-		if (fo[c,1:4] != zerocenter).any(): #checks if the center is [0 0 0] or not, otherwise it will shift the whole coordinates so that selected atom is [0 0 0]
-			for i in range(0,lfi):
-				fi[i,1:4]=fo[i,1:4]-fo[c,1:4]
-				#print("changed coordinate f%i " %(i), fi[i])
-		else:
-			pass
-
-		center= fi[c,1:4]
 		templist=[]
-		#print("center is: ", c, templist)
 		condition='false'
 		Gecounter=0 # this one counts the number of Ge atoms so in the end we can check to see whether they are in the center or not
 		nbond=0 # number of bonds
 		if condition=='false':
-			for b1 in range(0,lfi): #selects fisrt bond (b1)
+			for b1 in range(0,lfo): #selects fisrt bond (b1)
 				if c!=b1 and condition=='false':   #checks not to select the same atom as center atom
-					#print("b1 is:", b1)
-					ab1=fi[b1,1:4]          #put a line of array (xyz) into a list
-					distance=(((center[0]-ab1[0])**2)+((center[1]-ab1[1])**2)+((center[2]-ab1[2])**2))**0.5
-					db1=distance
-					if db1<3.0: #if the bound lenght is bigger than 3.2, we dont want it
+					a=fo[c,1:4]
+					b=fo[b1,1:4]
+					ab1=fo[b1,1:4]
+					db1=distance(a,b)
+					if db1<trhld: #if the bound lenght is bigger than 3.2, we dont want it
 						nbond += 1 # now we have 1 bond
 						if condition=='false':
-							for b2 in range(0,lfi):   #selects second bond and checks to see if it is different from center and b1
+							for b2 in range(0,lfo):   #selects second bond and checks to see if it is different from center and b1
 								if c!=b2 and b1!=b2 and condition=='false':
-									#print("b2 is:", b2)
-									ab2=fi[b2,1:4]
-									distance=(((center[0]-ab2[0])**2)+((center[1]-ab2[1])**2)+((center[2]-ab2[2])**2))**0.5
-									db2=distance
-									if abs(db1-db2)< 2e-1:  #if the bond lenght of both b1 and b2 are the same, then calculate the COS
+									a=fo[c,1:4]
+									b=fo[b2,1:4]
+									ab2=fo[b2,1:4]
+									db2=distance(a,b)
+									if abs(db1-db2)< tlrnc:  #if the bond lenght of both b1 and b2 are the same, then calculate the COS
 										nbond += 1 # now we have 2 bonds
 										#print("b2")
 
 										dot = sum(ab1*ab2)
 										#dot = np.dot(ab1, ab2)
-										normb1 = db1
-										normb2 = db2
+										normb1= np.linalg.norm(ab1)
+										normb2= np.linalg.norm(ab2)
 										cosb12 = dot / (normb1 * normb2)
 										teta = mt.degrees(mt.acos(cosb12))
 
 										#print("cos 12 is:", cosb12) #cos12 means Cos angle-b1-b2
 										if condition=='false':
-											for b3 in range(0,lfi):
+											for b3 in range(0,lfo):
 												if b3!=c and b3!=b2 and b3!=b1 and condition=='false':
-													#print("b3 is:", b3)
-													ab3=fi[b3,1:4]
-													distance=(((center[0]-ab3[0])**2)+((center[1]-ab3[1])**2)+((center[2]-ab3[2])**2))**0.5
-													db3=distance
-													if abs(db3-db1)<2e-1:
+													a=fo[c,1:4]
+													b=fo[b3,1:4]
+													ab3=fo[b3,1:4]
+													db3=distance(a,b)
+													if abs(db3-db1)<tlrnc:
 														nbond += 1
 														#print("b3")
 														tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b1,0],fo[c,0],fo[b2,0])) #teta from previous bond but should be appended here, otherwise we will have teta for 2folds
 														dot = sum(ab3*ab2)
 														#dot = np.dot(ab3, ab2)
-														normb3 = db3
-														normb2 = db2
+														normb3 = np.linalg.norm(ab3)
+														normb2 = np.linalg.norm(ab2)
 														cosb23 = dot / (normb3 * normb2)
 														teta = mt.degrees(mt.acos(cosb23))
 														tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b2,0],fo[c,0],fo[b3,0]))
 
 														dot = sum(ab3*ab1)
 														#dot = np.dot(ab3, ab1)
-														normb3 = db3
-														normb1 = db1
+														normb3 = np.linalg.norm(ab3)
+														normb1 = np.linalg.norm(ab1)
 														cosb13 = dot / (normb3 * normb1)
 														teta = mt.degrees(mt.acos(cosb13))
 														tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b1,0],fo[c,0],fo[b3,0]))
 
 														#print("cos 23-13 is:", cosb23, cosb13)
 														if condition=='false':
-															for b4 in range(0,lfi):
+															for b4 in range(0,lfo):
 																if c!=b4 and b1!=b4 and b2!=b4 and b3!=b4 and condition=='false':
-																	#print("b4 is:", b4)
-																	ab4=fi[b4,1:4]
-																	distance=(((center[0]-ab4[0])**2)+((center[1]-ab4[1])**2)+((center[2]-ab4[2])**2))**0.5
-																	db4=distance
-																	if abs(db4-db1)<2e-1:
+																	a=fo[c,1:4]
+																	b=fo[b4,1:4]
+																	ab4=fo[b4,1:4]
+																	db4=distance(a,b)
+																	if abs(db4-db1)<tlrnc:
 																		nbond += 1
 																		#print("b4")
 																		dot = sum(ab4*ab1)
 																		#dot = np.dot(ab4, ab1)
-																		normb4 = db4
-																		normb1 = db1
+																		normb4 = np.linalg.norm(ab4)
+																		normb1 = np.linalg.norm(ab1)
 																		cosb14 = dot / (normb1 * normb4)
 																		teta = mt.degrees(mt.acos(cosb14))
 																		tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b1,0],fo[c,0],fo[b4,0]))
 
 																		dot = sum(ab4*ab2)
 																		#dot = np.dot(ab4, ab2)
-																		normb4 = db4
-																		normb2 = db2
+																		normb4 = np.linalg.norm(ab4)
+																		normb2 = np.linalg.norm(ab2)
 																		cosb24 = dot / (normb2 * normb4)
 																		teta = mt.degrees(mt.acos(cosb24))
 																		tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b2,0],fo[c,0],fo[b4,0]))
 
 																		dot = sum(ab4*ab3)
 																		#dot = np.dot(ab4, ab3)
-																		normb3 = db3
-																		normb4 = db4
+																		normb3 = np.linalg.norm(ab3)
+																		normb4 = np.linalg.norm(ab4)
 																		cosb34 = dot / (normb3 * normb4)
 																		teta = mt.degrees(mt.acos(cosb34))
 																		tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b3,0],fo[c,0],fo[b4,0]))
 
 																		if condition=='false':
-																			for b5 in range(0,lfi):
+																			for b5 in range(0,lfo):
 																				if c!=b5 and b1!=b5 and b2!=b5 and b3!=b5 and b4!=b5 and condition=='false':
-																					#print("b5 is:", b5)
-																					ab5=fi[b5,1:4]
-																					distance=(((center[0]-ab5[0])**2)+((center[1]-ab5[1])**2)+((center[2]-ab5[2])**2))**0.5
-																					db5=distance
-																					if abs(db5-db1)<2e-1:
+																					a=fo[c,1:4]
+																					b=fo[b5,1:4]
+																					ab5=fo[b5,1:4]
+																					db5=distance(a,b)
+																					if abs(db5-db1)<tlrnc:
 																						nbond += 1
 																						#print("b5")
 
 																						dot = sum(ab5*ab1)
-																						normb5 = db5
-																						normb1 = db1
+																						normb5 = np.linalg.norm(ab5)
+																						normb1 = np.linalg.norm(ab1)
 																						cosb15 = dot / (normb1 * normb5)
 																						teta = mt.degrees(mt.acos(cosb15))
 																						tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b1,0],fo[c,0],fo[b5,0]))
 
 																						dot = sum(ab5*ab2)
-																						normb5 = db5
-																						normb2 = db2
+																						normb5 = np.linalg.norm(ab5)
+																						normb2 = np.linalg.norm(ab2)
 																						cosb25 = dot / (normb2 * normb5)
 																						teta = mt.degrees(mt.acos(cosb25))
 																						tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b2,0],fo[c,0],fo[b5,0]))
 
 																						dot = sum(ab5*ab3)
-																						normb5 = db5
-																						normb3 = db3
+																						normb5 = np.linalg.norm(ab5)
+																						normb3 = np.linalg.norm(ab3)
 																						cosb35 = dot / (normb3 * normb5)
 																						teta = mt.degrees(mt.acos(cosb35))
 																						tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b3,0],fo[c,0],fo[b5,0]))
 
 																						dot = sum(ab4*ab5)
-																						normb5 = db5
-																						normb4 = db4
+																						normb5 = np.linalg.norm(ab5)
+																						normb4 = np.linalg.norm(ab4)
 																						cosb45 = dot / (normb4 * normb5)
 																						teta = mt.degrees(mt.acos(cosb45))
 																						tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b4,0],fo[c,0],fo[b5,0]))
 
 																						if condition=='false':
-																							for b6 in range(0,lfi):
+																							for b6 in range(0,lfo):
 																								#print("looping b6", b6)
 																								if c!=b6 and b1!=b6 and b2!=b6 and b3!=b6 and b4!=b6 and b5!=b6 and condition=='false':
-																									#print("b6 is:", b6)
-																									ab6=fi[b6,1:4]
-																									distance=(((center[0]-ab6[0])**2)+((center[1]-ab6[1])**2)+((center[2]-ab6[2])**2))**0.5
-																									db6=distance
-																									if abs(db6-db1)<2e-1:
+																									a=fo[c,1:4]
+																									b=fo[b6,1:4]
+																									ab6=fo[b6,1:4]
+																									db6=distance(a,b)
+																									if abs(db6-db1)<tlrnc:
 																										nbond += 1
 																										#print("b6")
 
 																										dot = sum(ab6*ab1)
-																										normb6 = db6
-																										normb1 = db1
+																										normb6 = np.linalg.norm(ab6)
+																										normb1 = np.linalg.norm(ab1)
 																										cosb16 = dot / (normb1 * normb6)
 																										teta = mt.degrees(mt.acos(cosb16))
 																										tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b1,0],fo[c,0],fo[b6,0]))
 
 																										dot = sum(ab6*ab2)
-																										normb6 = db6
-																										normb2 = db2
+																										normb6 = np.linalg.norm(ab6)
+																										normb2 = np.linalg.norm(ab2)
 																										cosb26 = dot / (normb2 * normb6)
 																										teta = mt.degrees(mt.acos(cosb26))
 																										tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b2,0],fo[c,0],fo[b6,0]))
 
 																										dot = sum(ab6*ab3)
-																										normb6 = db6
-																										normb3 = db3
+																										normb6 = np.linalg.norm(ab6)
+																										normb3 = np.linalg.norm(ab3)
 																										cosb36 = dot / (normb3 * normb6)
 																										teta = mt.degrees(mt.acos(cosb36))
 																										tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b3,0],fo[c,0],fo[b6,0]))
 
 																										dot = sum(ab4*ab6)
-																										normb6 = db6
-																										normb4 = db4
+																										normb6 = np.linalg.norm(ab6)
+																										normb4 = np.linalg.norm(ab4)
 																										cosb46 = dot / (normb4 * normb6)
 																										teta = mt.degrees(mt.acos(cosb46))
 																										tetatot.append("{:3.3f} {:2s}-{:2s}-{:2s}".format(teta,fo[b4,0],fo[c,0],fo[b6,0]))
 
 																										dot = sum(ab5*ab6)
-																										normb6 = db6
-																										normb5 = db5
+																										normb6 = np.linalg.norm(ab6)
+																										normb5 = np.linalg.norm(ab5)
 																										cosb56 = dot / (normb5 * normb6)
 																										#print("dot db5 db6 cosb56",ab5,ab6,dot,db6,db5,cosb56)
 																										#print(fi)
@@ -323,27 +334,7 @@ for N in range(0,len(fa),Natom):
 					break
 			else:
 				condition='true'
-			#if nbond==3:
-			#	templist= [c,b1,b2,b3]
-			#	for i in templist:
-			#		if fo[i,0]=='Ge':
-			#			Gecounter += 1
-			#if nbond==4:
-			#	templist= [c,b1,b2,b3,b4]
-			#	for i in templist:
-			#		if fo[i,0]=='Ge':
-			#			Gecounter += 1
-			#if nbond==5:
-			#	templist= [c,b1,b2,b3,b4,b5]
-			#	for i in templist:
-			#		if fo[i,0]=='Ge':
-			#			Gecounter += 1
-			#if nbond==6:
-			#	templist= [c,b1,b2,b3,b4,b5,b6]
-			#	for i in templist:
-			#		if fo[i,0]=='Ge':
-			#			Gecounter += 1
-			#if (Gecounter >= 2 and fo[c,0]=='Ge') or (Gecounter <= 1):
+
 			if nbond==3:
 				nlocal += 1
 				n3fl += 1
