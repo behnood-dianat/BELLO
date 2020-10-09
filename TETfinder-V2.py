@@ -136,7 +136,8 @@ for N in range(0,len(fa),Natom):
 					b=fo[b1,1:4]
 					ab1=fo[b1,1:4]
 					db1=distance(a,b)
-					if db1<=trhld: #if the bound lenght is bigger than 3.2, we dont want it
+					if (trhld-tlrnc)<db1<(trhld+tlrnc):
+						print(db1)
 						nbond += 1 # now we have 1 bond
 						if condition=='false':
 							for b2 in range(0,lfo):   #selects second bond and checks to see if it is different from center and b1
