@@ -437,4 +437,4 @@ np.savetxt('output-pdb-coords-m.txt', pdbcoords, fmt="%s")
 np.savetxt('output-local-statistics.txt', localstats, fmt="%s")
 np.savetxt('output-angle-distribution.txt', tetatot, fmt="%s")
 print("Done!")
-np.savetxt('zzz.txt', fo, fmt="%s")
+
