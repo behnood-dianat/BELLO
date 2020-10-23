@@ -20,7 +20,10 @@ trhld=3.0#float(input('Input atomic distance threshold (Ang): '))
 tlrnc=0.10#float(input('Input atomic distance tolerance (Ang): '))
 
 #celldm=celldmx=celldmy=celldmz=20.644848284633
-celldm=celldmx=celldmy=celldmz=20.644848284633#float(input('If your unitcell is cubic, then enter the lattice constant in Ang: '))
+#celldm=celldmx=celldmy=celldmz=20.644848284633#float(input('If your unitcell is cubic, then enter the lattice constant in Ang: '))
+celldmx=40.482	
+celldmy=40.482
+celldmz=60.723
 
 lfole=len(file)
 print("File lenght is: ",lfole)
@@ -64,7 +67,9 @@ def distance(a, b):
 
 	return mt.sqrt(x**2 + y**2 + z**2)
 
-A=B=C=celldm
+A=celldmx
+B=celldmy
+C=celldmz
 
 #------------------------------------
 #-----------Dot function-------------
@@ -73,17 +78,18 @@ A=B=C=celldm
 def dott(a,b,c):
 #a and b are the bonds
 #c is the center atom
+	celld=[celldmx,celldmy,celldmz]
 	tlist=[a,b]
 	#np.linalg.norm(j-c))
 	for j in tlist:
 		d=(mt.sqrt((j[0]-c[0])**2 + (j[1]-c[1])**2 + (j[2]-c[2])**2))
 		if ( d != distance(j,c)):
 			for i in range(0,3):
-				if abs(j[i]-c[i])>(celldm/2):
+				if abs(j[i]-c[i])>(celld[i]/2):
 					if c[i] < j[i]:
-						j[i]=(j[i] - celldm)
+						j[i]=(j[i] - celld[i])
 					elif c[i] > j[i]:
-						j[i]=(j[i] + celldm)
+						j[i]=(j[i] + celld[i])
 
 	return sum((tlist[0]-c)*(tlist[1]-c))
 
@@ -95,7 +101,7 @@ def rep(a):
 	binn=[]
 	binn.append(a[0])
 	for i in range(1,len(a)):
-		if np.all([a[i][1:4] != x[1:4] for x in binn]):
+		if np.any([a[i][1:4] != x[1:4] for x in binn]):
 			binn.append(a[i])
 
 	return binn
