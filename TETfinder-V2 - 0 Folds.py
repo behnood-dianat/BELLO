@@ -15,15 +15,15 @@ file = np.array(f)
 
 Natom=int(f[0][0])
 
-trhld=3.0#float(input('Input atomic distance threshold (Ang): '))
+trhld=2.5#float(input('Input atomic distance threshold (Ang): '))
 
 tlrnc=0.10#float(input('Input atomic distance tolerance (Ang): '))
 
 #celldm=celldmx=celldmy=celldmz=20.644848284633
 #celldm=celldmx=celldmy=celldmz=20.644848284633#float(input('If your unitcell is cubic, then enter the lattice constant in Ang: '))
-celldmx=40.482	
-celldmy=40.482
-celldmz=60.723
+celldmx=24.737	
+celldmy=24.737
+celldmz=24.737
 
 lfole=len(file)
 print("File lenght is: ",lfole)
@@ -40,7 +40,7 @@ xyzcoordinates= [] # final xyz coordinates
 pdbcoords=[]# Pdb format output
 angle=[] # angle distribution
 localstats=[] # output for statistics on local orders
-localstats.append(["3-FOLD","4-FOLD","TETRAHEDRAL","5-FOLD","OCTAHEDRAL","Total"])
+localstats.append(["0-FOLD","1-FOLD","2-FOLD","3-FOLD","4-FOLD","TETRAHEDRAL","5-FOLD","OCTAHEDRAL","Total"])
 tPDB= "PDB coordinates"
 pdbcoords.append([tPDB])
 qframe=[]
@@ -136,6 +136,9 @@ for N in range(0,len(fa),Natom):
 	aq=[]
 	mcoordinates= [] # temporary xyz coordinates
 	nlocal=0 # number of local orders
+	n0fl=0   # number of 0-FOLDs
+	n1fl=0   # number of 1-FOLDs
+	n2fl=0   # number of 2-FOLDs
 	n3fl=0   # number of 3-FOLDs
 	n4fl=0   # number of 4-FOLDs
 	ntet=0   # number of TETRAHEDRALs
@@ -145,7 +148,6 @@ for N in range(0,len(fa),Natom):
 	for c in range (0,lfo):  #in here we select the point which will be the center of tetrahedral
 		templist=[]
 		condition='false'
-		Gecounter=0 # this one counts the number of Ge atoms so in the end we can check to see whether they are in the center or not
 		nbond=0 # number of bonds
 		if condition=='false':
 			for b1 in range(0,lfo): #selects fisrt bond (b1)
@@ -319,7 +321,51 @@ for N in range(0,len(fa),Natom):
 					break
 			else:
 				condition='true'
-
+			if nbond==0:
+				nlocal += 1
+				n0fl += 1
+				q="Not defined"
+				templist= [c]
+				coordinates.append(["0-FOLD","-","q is:",q])
+				atomnumbertemp='{:6s} {:03d} {:03d} {:03d} {:03d} {:03d} {:03d} {:03d}'.format('0-FOLD',c+1,0,0,0,0,0,0)
+				atomnumbers.append(atomnumbertemp) # atom numbers, we will use it for pdos summation
+				for  i in templist: #writes the coordinates in mcoord, coord and pdb-coord
+					mcoordinates.append(fo[i,0:4]) 
+					coordinates.append(fo[i,0:4])
+					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'0FL','A',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
+					pdbcoords.append(pdbtemp)
+				coordinates.append([" "," "," "," "])
+				condition='true' # if the code reaches here, we want it to jump back to selecting b1
+			if nbond==1:
+				nlocal += 1
+				n1fl += 1
+				q="Not defined"
+				templist= [c,b1]
+				coordinates.append(["1-FOLD","-","q is:",q])
+				atomnumbertemp='{:6s} {:03d} {:03d} {:03d} {:03d} {:03d} {:03d} {:03d}'.format('1-FOLD',c+1,b1+1,0,0,0,0,0)
+				atomnumbers.append(atomnumbertemp) # atom numbers, we will use it for pdos summation
+				for  i in templist: #writes the coordinates in mcoord, coord and pdb-coord
+					mcoordinates.append(fo[i,0:4]) 
+					coordinates.append(fo[i,0:4])
+					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'1FL','B',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
+					pdbcoords.append(pdbtemp)
+				coordinates.append([" "," "," "," "])
+				condition='true' # if the code reaches here, we want it to jump back to selecting b1
+			if nbond==2:
+				nlocal += 1
+				n2fl += 1
+				q="Not defined"
+				templist= [c,b1,b2]
+				coordinates.append(["2-FOLD","-","q is:",q])
+				atomnumbertemp='{:6s} {:03d} {:03d} {:03d} {:03d} {:03d} {:03d} {:03d}'.format('2-FOLD',c+1,b1+1,b2+1,0,0,0,0)
+				atomnumbers.append(atomnumbertemp) # atom numbers, we will use it for pdos summation
+				for  i in templist: #writes the coordinates in mcoord, coord and pdb-coord
+					mcoordinates.append(fo[i,0:4]) 
+					coordinates.append(fo[i,0:4])
+					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'2FL','C',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
+					pdbcoords.append(pdbtemp)
+				coordinates.append([" "," "," "," "])
+				condition='true' # if the code reaches here, we want it to jump back to selecting b1
 			if nbond==3:
 				nlocal += 1
 				n3fl += 1
@@ -333,7 +379,7 @@ for N in range(0,len(fa),Natom):
 				for  i in templist: #writes the coordinates in mcoord, coord and pdb-coord
 					mcoordinates.append(fo[i,0:4]) 
 					coordinates.append(fo[i,0:4])
-					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'3FL','A',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
+					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'3FL','D',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
 					pdbcoords.append(pdbtemp)
 				coordinates.append([" "," "," "," "])
 				condition='true' # if the code reaches here, we want it to jump back to selecting b1
@@ -352,7 +398,7 @@ for N in range(0,len(fa),Natom):
 					for  i in templist: #writes the coordinates in mcoord, coord and pdb-coord
 						mcoordinates.append(fo[i,0:4])
 						coordinates.append(fo[i,0:4])
-						pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'TET','B',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
+						pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'TET','E',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
 						pdbcoords.append(pdbtemp)
 					coordinates.append([" "," "," "," "])
 				elif   q <=0.85:
@@ -365,7 +411,7 @@ for N in range(0,len(fa),Natom):
 					for  i in templist: #writes the coordinates in mcoord, coord and pdb-coord
 						mcoordinates.append(fo[i,0:4])
 						coordinates.append(fo[i,0:4])
-						pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'4FL','C',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
+						pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'4FL','F',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
 						pdbcoords.append(pdbtemp)
 					coordinates.append([" "," "," "," "])
 				condition='true'
@@ -382,7 +428,7 @@ for N in range(0,len(fa),Natom):
 				for  i in templist: #writes the coordinates in mcoord, coord and pdb-coord
 					mcoordinates.append(fo[i,0:4])
 					coordinates.append(fo[i,0:4])
-					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'5FL','D',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
+					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'5FL','G',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
 					pdbcoords.append(pdbtemp)
 				coordinates.append([" "," "," "," "])
 				condition='true'
@@ -399,7 +445,7 @@ for N in range(0,len(fa),Natom):
 				for  i in templist: #writes the coordinates in mcoord, coord and pdb-coord
 					mcoordinates.append(fo[i,0:4])
 					coordinates.append(fo[i,0:4])
-					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'OCT','E',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
+					pdbtemp='{:6s}{:5d} {:^4s} {:3s} {:1s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',i+1,fo[i,0],'OCT','H',nlocal,fo[i,1],fo[i,2],fo[i,3],1.00,0.00,fo[i,0],"00")
 					pdbcoords.append(pdbtemp)
 				coordinates.append([" "," "," "," "])
 				condition='true'
@@ -410,10 +456,10 @@ for N in range(0,len(fa),Natom):
 		xyzcoordinates.append(x) # xyz coords of local orders
 	xyzcoordinates.append(["\r\n",Endf,"\r\n"," "])
 	atomnumbers.append(Endf)
-	stat= " \r\n Number of 3-FOLD, 4-FOLD, TETRAHEDRAL, 5-FOLD, OCTAHEDRAL: %d, %d, %d, %d, %d" % (n3fl, n4fl, ntet, n5fl, noct)
-	locq= "\r\n Number of local orders are: %d " % (len(aq))
+	stat= " \r\n Number of 0-FOLD, 1-FOLD, 2-FOLD, 3-FOLD, 4-FOLD, TETRAHEDRAL, 5-FOLD, OCTAHEDRAL: %d, %d, %d, %d, %d, %d, %d, %d" % (n0fl, n1fl, n2fl, n3fl, n4fl, ntet, n5fl, noct)
+	locq= "\r\n Number of local orders are: %d " % (nlocal)
 	coordinates.append([Endf,stat,locq,"\r\n"])
-	localstats.append([n3fl,n4fl,ntet,n5fl,noct,nlocal])
+	localstats.append([n0fl,n1fl,n2fl,n3fl,n4fl,ntet,n5fl,noct,nlocal])
 	pdbcoords.append(Endf)
 	aq=[round(num,2) for num in aq]
 	qframe.append(aq)
