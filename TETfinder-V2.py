@@ -21,9 +21,9 @@ tlrnc=0.10#float(input('Input atomic distance tolerance (Ang): '))
 
 #celldm=celldmx=celldmy=celldmz=20.644848284633
 #celldm=celldmx=celldmy=celldmz=20.644848284633#float(input('If your unitcell is cubic, then enter the lattice constant in Ang: '))
-celldmx=40.482	
-celldmy=40.482
-celldmz=60.723
+celldmx=20.644848284633	
+celldmy=20.644848284633
+celldmz=20.644848284633
 
 lfole=len(file)
 print("File lenght is: ",lfole)
@@ -41,8 +41,12 @@ pdbcoords=[]# Pdb format output
 angle=[] # angle distribution
 localstats=[] # output for statistics on local orders
 localstats.append(["3-FOLD","4-FOLD","TETRAHEDRAL","5-FOLD","OCTAHEDRAL","Total"])
-tPDB= "PDB coordinates"
-pdbcoords.append([tPDB])
+t1PDB= "PDB coordinates"
+t2PDB="-------BELLO-------"
+t3PDB="CRYST1   %f   %f   %f  90.00  90.00  90.00 P1          1" % (celldmx, celldmy, celldmz)
+pdbcoords.append(t1PDB)
+pdbcoords.append(t2PDB)
+pdbcoords.append(t3PDB)
 qframe=[]
 q3flframe=[]
 q4flframe=[]
