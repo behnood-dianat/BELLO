@@ -12,7 +12,9 @@ file = np.array(f)
 Natom=int(f[0][0])
 #emptylist=[" "," "," "," "]
 #celldm=20.644848284633
-celldm=float(input('Enter lattice constant (in Ang): '))
+celldmx=float(input('X-axis lattice constant in Ang: '))
+celldmy=float(input('Y-axis lattice constant in Ang: '))
+celldmz=float(input('Z-axis lattice constant in Ang: '))
 fat=str(input('First element: '))
 sat=str(input('Second element: '))
 rmax=int(input('Maximum range(integer): '))
@@ -42,12 +44,12 @@ print("Number of frames: ",Nframes)
 #------------------------------------
 for i in range(lfile):
 	if (file[i,1] != 'x'):
-		if file[i,1]>celldm or file[i,1]<0:
-			file[i,1]= file[i,1]%celldm
-		if file[i,2]>celldm or file[i,2]<0:
-			file[i,2]= file[i,2]%celldm
-		if file[i,3]>celldm or file[i,3]<0:
-			file[i,3]= file[i,3]%celldm
+		if file[i,1]>celldmx or file[i,1]<0:
+			file[i,1]= file[i,1]%celldmx
+		if file[i,2]>celldmy or file[i,2]<0:
+			file[i,2]= file[i,2]%celldmy
+		if file[i,3]>celldmz or file[i,3]<0:
+			file[i,3]= file[i,3]%celldmz
 		fa= np.vstack((fa, file[i]))
 print("Boundry Condition is done! \r\nCalculating Radial Pair Distribution Function:")
 
@@ -63,7 +65,9 @@ def distance(a, b):
 
 	return mt.sqrt(x**2 + y**2 + z**2)
 
-A=B=C=celldm
+A=celldmx
+B=celldmy
+C=celldmz
 totalRDF=[]
 #-------------------------------------
 #---looping over the atoms of a frame-
@@ -94,7 +98,7 @@ for N in range(0,len(fa),Natom):
 					b=fo[b1,1:4]
 					db1=distance(a,b)
 					templist.append(db1)
-					if  (db1 <= rmax) and (db1 <= celldm/2): #maximum range condition
+					if  (db1 <= rmax) and (db1 <= celldmx/2) and (db1 <= celldmy/2) and (db1 <= celldmz/2): #maximum range condition
 						rlist.append(db1)
 
 	rmax=(max(rlist))
@@ -106,7 +110,7 @@ for N in range(0,len(fa),Natom):
 	area = [4.*(mt.pi)*(r[i]**2) for i in range(n)]
 	vol = [(4.0 / 3.0) * (mt.pi) * (r[i])**3 for i in range(n)]
 	vol.insert(0,0)
-	density=natm2/(celldm**3)
+	density=natm2/(celldmx*celldmy*celldmz)
 
 	for i in range(n):
 		for j in range(nvals):
@@ -126,7 +130,7 @@ finalfile= np.column_stack((r,rdf))
 
 np.savetxt('RPDF.txt', finalfile, delimiter=' ', fmt="%s")
 
-plt.plot(r,rdf_hist,label='radial distribution function')
+plt.plot(r,rdf,label='radial distribution function')
 plt.xlabel('radius (Angstroms)')
 plt.ylabel('radial pair distribution function g(r)')
 plt.show()
