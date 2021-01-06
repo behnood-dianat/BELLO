@@ -13,17 +13,20 @@ f = pd.read_fwf('traj.xyz',header=None)
 f= f.fillna("x") #fill the empty spaces with X so that we can clean/organize them before analysis
 file = np.array(f)
 
+print("filename should be traj.xyz")
 Natom=int(f[0][0])
 
-trhld=2.5#float(input('Input atomic distance threshold (Ang): '))
+trhld=float(input('Input atomic distance threshold (Ang): '))
 
-tlrnc=0.10#float(input('Input atomic distance tolerance (Ang): '))
+tlrnc=float(input('Input atomic distance tolerance (Ang): '))
 
 #celldm=celldmx=celldmy=celldmz=20.644848284633
-#celldm=celldmx=celldmy=celldmz=20.644848284633#float(input('If your unitcell is cubic, then enter the lattice constant in Ang: '))
-celldmx=24.737	
-celldmy=24.737
-celldmz=24.737
+celldmx=float(input('X-axis lattice constant in Ang: '))
+celldmy=float(input('Y-axis lattice constant in Ang: '))
+celldmz=float(input('Z-axis lattice constant in Ang: '))
+#celldmx=24.737	
+#celldmy=24.737
+#celldmz=24.737
 
 lfole=len(file)
 print("File lenght is: ",lfole)
@@ -41,7 +44,9 @@ pdbcoords=[]# Pdb format output
 angle=[] # angle distribution
 localstats=[] # output for statistics on local orders
 localstats.append(["0-FOLD","1-FOLD","2-FOLD","3-FOLD","4-FOLD","TETRAHEDRAL","5-FOLD","OCTAHEDRAL","Total"])
-tPDB= "PDB coordinates"
+t1PDB= "PDB coordinates"
+t2PDB="-------BELLO-------"
+t3PDB="CRYST1   %f   %f   %f  90.00  90.00  90.00 P1          1" % (celldmx, celldmy, celldmz)
 pdbcoords.append([tPDB])
 qframe=[]
 q3flframe=[]
@@ -461,6 +466,7 @@ for N in range(0,len(fa),Natom):
 	coordinates.append([Endf,stat,locq,"\r\n"])
 	localstats.append([n0fl,n1fl,n2fl,n3fl,n4fl,ntet,n5fl,noct,nlocal])
 	pdbcoords.append(Endf)
+	tetatot.append(Endf)
 	aq=[round(num,2) for num in aq]
 	qframe.append(aq)
 	q3fl=[round(num,2) for num in q3fl]
@@ -485,7 +491,7 @@ np.savetxt('output-q-total.txt', qframe, delimiter=',', fmt="%s")
 np.savetxt('output-human-readable-coords.txt', coordinates, delimiter=' ', fmt="%s")
 np.savetxt('output-atom-number.txt',atomnumbers,delimiter=',',fmt="%s")
 np.savetxt('output-xyz-coords.txt', xyzcoordinates, delimiter=' ', fmt="%s")
-np.savetxt('output-pdb-coords-m.txt', pdbcoords, fmt="%s")
+np.savetxt('output-pdb-coords.txt', pdbcoords, fmt="%s")
 np.savetxt('output-local-statistics.txt', localstats, fmt="%s")
 np.savetxt('output-angle-distribution.txt', tetatot, fmt="%s")
 print("Done!")
