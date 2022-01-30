@@ -4,3 +4,4 @@ BELLO code is a post-processing script-tool created for the automatic analysis a
 
 Link to paper:
 Tavanti, Francesco, et al. "Hierarchical Short-and Medium-Range Order Structures in Amorphous Ge x Se1–x for Selectors Applications." ACS Applied Electronic Materials 2.9 (2020): 2961-2969.
+Original paper: Under Review
