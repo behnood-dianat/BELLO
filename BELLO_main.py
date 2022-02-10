@@ -4,8 +4,7 @@ import pandas as pd
 import PySimpleGUI as sg
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-import seaborn as sns
-from scipy.interpolate import Akima1DInterpolator
+from scipy.interpolate import Akima1DInterpolator, PchipInterpolator
 
 def BELLO(url,celldmx_raw,celldmy_raw,celldmz_raw,automatic,trhld_raw,tlrnc_raw,angle_condition):
 	print("|-----------------------------------------------------| \r\n|----------------------B.E.L.L.O----------------------| \r\n|---------Bond Element Lattice Locality Order---------|\r\n|-----------------------------------------------------|\r\n|-----------------------------------------------------|\r\n|-----------------------------------------------------|")
@@ -46,7 +45,7 @@ def BELLO(url,celldmx_raw,celldmy_raw,celldmz_raw,automatic,trhld_raw,tlrnc_raw,
 				file[i,3]= file[i,3]%celldmz
 			fa= np.vstack((fa, file[i]))
 	sg.one_line_progress_meter_cancel()
-	print("Boundary Condition is done!",len(fa))
+	print("Boundary Condition is done!")
 	if round(len(fa) - Natom) == 0:
 		max_val=1
 	else:
@@ -168,19 +167,19 @@ def BELLO(url,celldmx_raw,celldmy_raw,celldmz_raw,automatic,trhld_raw,tlrnc_raw,
 	pdbcoords=[]# Pdb format output
 	xyzcoordinates = []  # final xyz coordinates
 	localstats=[] # output for statistics on local orders
-	localstats.append(["3-FOLD","4-FOLD","TETRAHEDRAL","5-FOLD","OCTAHEDRAL","Total"])
+	localstats.append(["0-FOLD","1-FOLD","2-FOLD","3-FOLD","4-FOLD","TETRAHEDRAL","5-FOLD","OCTAHEDRAL","Total"])
 	t1PDB= "PDB coordinates"
 	t2PDB="-------BELLO-------"
 	t3PDB="CRYST1   %f   %f   %f  90.00  90.00  90.00 P1          1" % (celldmx, celldmy, celldmz)
 	pdbcoords.append(t1PDB)
 	pdbcoords.append(t2PDB)
 	pdbcoords.append(t3PDB)
-	qframe=[]
-	q3flframe=[]
-	q4flframe=[]
-	qtetframe=[]
-	q5flframe=[]
-	q6flframe=[]
+	qframe		=[]
+	q3flframe	=[]
+	q4flframe	=[]
+	qtetframe	=[]
+	q5flframe	=[]
+	q6flframe	=[]
 	tetatot=[]
 
 	# ------------------------------------
@@ -710,41 +709,118 @@ def BELLO(url,celldmx_raw,celldmy_raw,celldmz_raw,automatic,trhld_raw,tlrnc_raw,
 			np.savetxt(txtt, tetatot, fmt="%s")
 			tetatot = []
 
-
-	np.savetxt('output-q3fl.txt',q3flframe,delimiter=',',fmt="%s")
-	np.savetxt('output-q4fl.txt',q4flframe,delimiter=',',fmt="%s")
-	np.savetxt('output-qtet.txt',qtetframe,delimiter=',',fmt="%s")
-	np.savetxt('output-q5fl.txt',q5flframe,delimiter=',',fmt="%s")
-	np.savetxt('output-q6fl.txt',q6flframe,delimiter=',',fmt="%s")
-	np.savetxt('output-q-total.txt',qframe,delimiter=',',fmt="%s")
+	np.savetxt('output-q3fl.txt',np.array(q3flframe,dtype=object),delimiter=',',fmt="%s")
+	np.savetxt('output-q4fl.txt',np.array(q4flframe,dtype=object),delimiter=',',fmt="%s")
+	np.savetxt('output-qtet.txt',np.array(qtetframe,dtype=object),delimiter=',',fmt="%s")
+	np.savetxt('output-q5fl.txt',np.array(q5flframe,dtype=object),delimiter=',',fmt="%s")
+	np.savetxt('output-q6fl.txt',np.array(q6flframe,dtype=object),delimiter=',',fmt="%s")
+	np.savetxt('output-q-total.txt',np.array(qframe,dtype=object),delimiter=',',fmt="%s")
 	np.savetxt('output-human-readable-coords.txt',coordinates,delimiter=' ',fmt="%s")
 	np.savetxt('output-atom-number.txt',atomnumbers,delimiter=' ',fmt='%s')
 	np.savetxt('output-xyz-coords.txt',mcoordinates,delimiter=' ',fmt='%s')
 	np.savetxt('output-pdb-coords-m.txt',pdbcoords,fmt="%s")
 	np.savetxt('out2.pdb',pdbcoords,fmt="%s")
 	np.savetxt('output-local-statistics.txt',localstats,fmt="%s")
-	print(len(tetatot))
 	np.savetxt('output-angle-distribution.txt',tetatot,fmt="%s")
 	sg.one_line_progress_meter_cancel()
 	print("Done!")
-
-	bin_number=40
-	q_histogram_values_tot=np.concatenate(qframe,axis=None)
-	q_histogram_tot,bins_tot=np.histogram(a=q_histogram_values_tot,range=(0.0,1.0),bins=bin_number)
+	#-----------------------------------------------------------------------------------------
+	bin_number=20
+	initial_range=0
+	#-----------------------------------------------------------------------------------------
+	q_histogram_values_tot = np.concatenate(qframe, axis=None)
+	q_histogram_tot, bins_tot = np.histogram(a=q_histogram_values_tot,  range=(initial_range, 1.0), bins=bin_number)
+	bins_tot = list(np.linspace(initial_range, 1, len(bins_tot) - 1))
+	x_data_smooth = np.linspace(initial_range, 1, 1000)
+	y_non_smooth_tot = Akima1DInterpolator(bins_tot, q_histogram_tot)
+	y_smooth_tot = y_non_smooth_tot(x_data_smooth)
 	q_histogram_values_3fl=np.concatenate(q3flframe,axis=None)
+	q_histogram_3fl, bins_temp = np.histogram(a=q_histogram_values_3fl, range=(initial_range, 1.0), bins=bin_number)
+	y_non_smooth_3fl = Akima1DInterpolator(bins_tot, q_histogram_3fl)
+	y_smooth_3fl = y_non_smooth_3fl(x_data_smooth)
 	q_histogram_values_4fl=np.concatenate(q4flframe,axis=None)
+	q_histogram_4fl, bins_temp = np.histogram(a=q_histogram_values_4fl, range=(initial_range, 1.0), bins=bin_number)
+	y_non_smooth_4fl= Akima1DInterpolator(bins_tot, q_histogram_4fl)
+	y_smooth_4fl = y_non_smooth_4fl(x_data_smooth)
 	q_histogram_values_tet=np.concatenate(qtetframe,axis=None)
+	q_histogram_tet, bins_temp = np.histogram(a=q_histogram_values_tet, range=(initial_range, 1.0), bins=bin_number)
+	y_non_smooth_tet = Akima1DInterpolator(bins_tot, q_histogram_tet)
+	y_smooth_tet = y_non_smooth_tet(x_data_smooth)
 	q_histogram_values_5fl=np.concatenate(q5flframe,axis=None)
+	q_histogram_5fl, bins_temp = np.histogram(a=q_histogram_values_5fl, range=(initial_range, 1.0), bins=bin_number)
+	y_non_smooth_5fl = Akima1DInterpolator(bins_tot, q_histogram_5fl)
+	y_smooth_5fl = y_non_smooth_5fl(x_data_smooth)
 	q_histogram_values_6fl=np.concatenate(q6flframe,axis=None)
-	plt.figure()
-	plt.hist(x=q_histogram_values_tot,bins=bins_tot,range=(0,1),color='black',edgecolor='black',label='Total')
-	plt.hist(x=q_histogram_values_3fl,bins=bins_tot,range=(0,1),label='3_Fold',edgecolor='black',alpha=0.5)
-	plt.hist(x=q_histogram_values_4fl,bins=bins_tot,range=(0,1),label='4_Fold',edgecolor='black',alpha=0.5)
-	plt.hist(x=q_histogram_values_tet,bins=bins_tot,range=(0,1),label='Tetrahedral',edgecolor='black',alpha=0.5)
-	plt.hist(x=q_histogram_values_5fl,bins=bins_tot,range=(0,1),label='5_Fold',edgecolor='black',alpha=0.5)
-	plt.hist(x=q_histogram_values_6fl,bins=bins_tot,range=(0,1),label='Octahedral',edgecolor='black',alpha=0.5)
-	plt.title("Histogram order parameter q ")
-	plt.legend()
+	q_histogram_6fl, bins_temp = np.histogram(a=q_histogram_values_6fl, range=(initial_range, 1.0), bins=bin_number)
+	y_non_smooth_6fl = Akima1DInterpolator(bins_tot, q_histogram_6fl)
+	y_smooth_6fl = y_non_smooth_6fl(x_data_smooth)
+	edgecolor=(0,0,0,1)
+	# alternative histogram plot----------------------------------------------------------------------
+#	plt.figure(facecolor="none",figsize=(6.75, 5))
+#	plt.hist(x=q_histogram_values_tot,bins=bins_tot,facecolor=(0.25,0.25,0.25,1),edgecolor=edgecolor)
+#	plt.hist(x=q_histogram_values_3fl, bins=bins_tot,edgecolor=edgecolor, alpha=0.5,lw=2)
+#	plt.hist(x=q_histogram_values_4fl, bins=bins_tot,edgecolor=edgecolor, alpha=0.5,lw=2)
+#	plt.hist(x=q_histogram_values_tet, bins=bins_tot,edgecolor=edgecolor, alpha=0.5,lw=2)
+#	plt.hist(x=q_histogram_values_5fl, bins=bins_tot,edgecolor=edgecolor, alpha=0.5,lw=2)
+#	plt.hist(x=q_histogram_values_6fl, bins=bins_tot,edgecolor=edgecolor, alpha=0.5,lw=2)
+	#-------------------------------------------------------------------------------------------------
+	fig = plt.figure(facecolor="none",figsize=(6.75, 5))
+	ax = fig.add_subplot(111)
+	text_label_position=(5/6)*max(q_histogram_tot)
+	fontsize = 14
+	fontsize_legend = 10
+	for tick in ax.xaxis.get_major_ticks():
+		tick.label1.set_fontsize(fontsize)
+	for tick in ax.yaxis.get_major_ticks():
+		tick.label1.set_visible(False)
 
+	plt.fill_between(x_data_smooth,y_smooth_tot,edgecolor=edgecolor, facecolor=(1,1,1,1),label='Total',lw=2)
+	plt.fill_between(x_data_smooth,y_smooth_3fl,edgecolor=edgecolor,alpha=0.5, label='3_Fold',lw=2)
+	plt.fill_between(x_data_smooth,y_smooth_4fl,edgecolor=edgecolor,alpha=0.5, label='4_Fold',lw=2)
+	plt.fill_between(x_data_smooth,y_smooth_tet,edgecolor=edgecolor,alpha=0.5, label='Tetrahedral',lw=2)
+	plt.fill_between(x_data_smooth,y_smooth_5fl,edgecolor=edgecolor,alpha=0.5, label='5_Fold',lw=2)
+	plt.fill_between(x_data_smooth,y_smooth_6fl,edgecolor=edgecolor,alpha=0.5, label='Octahedral',lw=2)
+	plt.axvline(0.75, color='grey', ls='--', lw=2)
+	plt.text(x=0.75,y=text_label_position,	 color='grey', s='3FL planar',	rotation=90,size=fontsize_legend,ha='center',va='center',
+			 bbox=dict(facecolor='w',edgecolor='w', boxstyle='round'))
+	plt.axvline(0.875, color='grey', ls='--', lw=2)
+	plt.text(x=0.875, y=text_label_position, color='grey', s='3FL pyramidal', rotation=90, size=fontsize_legend, ha='center', va='center',
+			 bbox=dict(facecolor='w',edgecolor='w', boxstyle='round'))
+	plt.axvline(0.625, color='grey', ls='--', lw=2)
+	plt.text(x=0.625, y=text_label_position, color='grey', s='4FL defective',	rotation=90, size=fontsize_legend, ha='center', va='center',
+			 bbox=dict(facecolor='w',edgecolor='w', boxstyle='round'))
+	plt.axvline(0.5, color='grey', ls='--', lw=2)
+	plt.text(x=0.5, y=text_label_position,  color='grey',  s='4FL planar',	rotation=90, size=fontsize_legend, ha='center', va='center',
+			 bbox=dict(facecolor='w',edgecolor='w', boxstyle='round'))
+	plt.axvline(1, color='grey', ls='--', lw=2)
+	plt.text(x=1, y=text_label_position,  color='grey',    s='Tetrahedral',	rotation=90, size=fontsize_legend, ha='center', va='center',
+			 bbox=dict(facecolor='w',edgecolor='w', boxstyle='round'))
+	plt.axvline(0.333, color='grey', ls='--', lw=2)
+	plt.text(x=0.333, y=text_label_position,  color='grey',s='5FL defective',	rotation=90, size=fontsize_legend, ha='center', va='center',
+			 bbox=dict(facecolor='w',edgecolor='w', boxstyle='round'))
+	plt.axvline(0.00, color='grey', ls='--', lw=2)
+	plt.text(x=0.00, y=text_label_position,  color='grey', s='Octahedral',	rotation=90, size=fontsize_legend, ha='center', va='center',
+			 bbox=dict(facecolor='w',edgecolor='w', boxstyle='round'))
+	plt.ylabel("Distribution (arb. units)",size=fontsize)
+	plt.xlabel('Order parameter q',size=fontsize)
+	plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
+                mode="expand", borderaxespad=0, ncol=3)
 
+	# Local stats plots----------------------
+	labels=["0-FOLD","1-FOLD","2-FOLD","3-FOLD","4-FOLD","TETRAHDRL","5-FOLD","6-FOLD"]
+	y_axis=np.matrix(localstats[1:])
+	y_axis=y_axis[:,:-1]
+	x_axis=list(np.linspace(0,Nframes,Nframes))
+	print(np.shape(y_axis),np.shape(x_axis))
+	plt.figure(facecolor="none",figsize=(6.75, 5))
+
+	for i in range(0,len(labels)):
+		plt.plot(x_axis,y_axis[:,i],label=labels[i],marker='o')
+	plt.yticks(list(np.linspace(0,np.max(y_axis),10)),fontsize=14)
+	plt.xticks(fontsize=14)
+	plt.xlabel('Frame number',size=fontsize)
+	plt.ylabel('Local order population / frame',size=fontsize)
+	plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
+                mode="expand", borderaxespad=0, ncol=4)
+	plt.grid(visible=True,axis='y')
 	plt.show()

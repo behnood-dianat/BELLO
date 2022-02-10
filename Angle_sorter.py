@@ -1,8 +1,7 @@
 import shutil
 import numpy as np
-import os, pathlib, stat
+import os, pathlib, stat, glob
 import matplotlib.pyplot as plt
-from itertools import product
 import scipy.stats as stats
 
 def folder_overwrite(sorted_folder):
@@ -24,41 +23,56 @@ def sorter(elements):
     folder_overwrite(sorted_folder)
 
     names=[]
-    file_names=[]
-    plotting_list=[]
 
     def func_element(elements):
         sorted_list = []
         for i in elements:
             for j in elements:
                 for k in elements:
-                    name=i+'-'+j+'-'+k
+                    name1=i+'-'+j+'-'+k
+                    name2=k+'-'+j+'-'+i
                     for x in range(0,lenght):
-                        if file[x][1]==name:
+                        if file[x][1]==name1 or file[x][1]==name2:
                             sorted_list.append(list(file[x]))
-                    save_name = name + '.txt'
-                    names.append(name)
-                    file_names.append(save_name)
-                    np.savetxt(pathlib.PurePosixPath(sorted_folder, save_name), sorted_list, fmt="%s")
-                    plotting_list.append(sorted_list)
-                    sorted_list=[]
+                            temp_list=[i,k]
+                            temp_list.sort()
+                            name=temp_list[0]+'-'+j+'-'+temp_list[1]
+                            condition=True
+                    if condition:
+                        save_name = name + '.txt'
+                        names.append(name)
+                        np.savetxt(pathlib.PurePosixPath(sorted_folder, save_name), sorted_list, fmt="%s")
+                        sorted_list=[]
+                        condition=False
 
 
     func_element(elements)
     print('Angle sorting is done!')
     bins = np.linspace(0, 180, 45, dtype='i')
+    os.chdir(sorted_folder)
+    file_names = glob.glob('*.txt')
     for i in range(0,len(file_names)):
-       plt.figure(i)
-       data = np.loadtxt(pathlib.PurePosixPath(sorted_folder, file_names[i]), dtype="f", usecols=0)
-       n, x, patches = plt.hist(x=data,bins=bins,label=names[i],
-                                              edgecolor='black',density=True)
-       cm = plt.cm.get_cmap('viridis')
-       col = (n - n.min()) / (n.max() - n.min())
-       for c, p in zip(col, patches):
-           plt.setp(p, 'facecolor', cm(c))
-       density = stats.gaussian_kde(data)
-       plt.plot(x, density(x),label=('Fit %s' % names[i]))
-       plt.legend()
+        fig = plt.figure(i,facecolor="none", figsize=(6.75, 5))
+        ax = fig.add_subplot(111)
+        #plt.figure(i,figsize=(6.75, 5),facecolor="none")
+        data = np.loadtxt(pathlib.PurePosixPath(sorted_folder, file_names[i]), dtype="f", usecols=0)
+        n, x, patches = ax.hist(x=data,bins=bins,label=names[i],
+                                               edgecolor='black',density=True)
+        cm = plt.cm.get_cmap('viridis')
+        col = (n - n.min()) / (n.max() - n.min())
+        for c, p in zip(col, patches):
+            plt.setp(p, 'facecolor', cm(c))
+        density = stats.gaussian_kde(data)
+
+        fontsize = 14
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(fontsize)
+        #    tick.label1.set_fontweight('bold')
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(fontsize)
+        #   tick.label1.set_fontweight('bold')
+        ax.plot(x, density(x),label=('Fit %s' % names[i]))
+        plt.legend()
 
  #  -----------------------------------------------------------------------------------------------
  #  ---- This is for sub-plotting, it's best suited for 2-element plots since more than 2 elements
