@@ -112,7 +112,7 @@ def window_angle():
             [sg.Text('Number of chemical elements'),sg.Push(),sg.Combo(('2', '3','4','5','6'),default_value='', size=(5, 1),enable_events=True)],
             [sg.Push(),sg.Button('Submit',key="submit",enable_events=True)],
             ]
-    angle_window= sg.Window('Angle sorting input',layout,keep_on_top=True)
+    angle_window= sg.Window('ADF input',layout,keep_on_top=True)
     while True:
         event, values = angle_window.read()
         if event=='submit' and true_call_string(list(values.values())[1:len(values)]):
@@ -125,19 +125,19 @@ def window_angle():
             return(angle_value,list({'x': 'x'}.values()))
         if values[0]=='2':
             angle_window.close()
-            angle_window = sg.Window('Angle sorting input',make_layout(int(values[0])),keep_on_top=True)
+            angle_window = sg.Window('ADF input',make_layout(int(values[0])),keep_on_top=True)
         if values[0]=='3':
             angle_window.close()
-            angle_window = sg.Window('Angle sorting input',make_layout(int(values[0])),keep_on_top=True)
+            angle_window = sg.Window('ADF input',make_layout(int(values[0])),keep_on_top=True)
         if values[0]=='4':
             angle_window.close()
-            angle_window = sg.Window('Angle sorting input',make_layout(int(values[0])),keep_on_top=True)
+            angle_window = sg.Window('ADF input',make_layout(int(values[0])),keep_on_top=True)
         if values[0]=='5':
             angle_window.close()
-            angle_window = sg.Window('Angle sorting input',make_layout(int(values[0])),keep_on_top=True)
+            angle_window = sg.Window('ADF input',make_layout(int(values[0])),keep_on_top=True)
         if values[0]=='6':
             angle_window.close()
-            angle_window = sg.Window('Angle sorting input',make_layout(int(values[0])),keep_on_top=True)
+            angle_window = sg.Window('ADF input',make_layout(int(values[0])),keep_on_top=True)
 
 def window_coord():
     coord_value= True
@@ -230,7 +230,7 @@ layout_main = [
          sg.Checkbox('Automatic',enable_events=True, default=False, key="automatic"),sg.Push(),
          sg.InputText(key="trh",size=(10,10),default_text='3.0')],
         [sg.Text('Inter-atomic distance tolerance'),sg.Push(),sg.InputText(key="tlr",size=(10,10),default_text='0.5')],
-        [sg.Text('Separate Angle distributions (memory efficient)'),sg.Push(),
+        [sg.Text('Divide Angle distributions (memory efficient)'),sg.Push(),
          sg.Checkbox('',enable_events=True, default=False, key="sep_ang")],
         [sg.Text(' ')],
         [sg.Text('Unitcell dimensions (Ang)'),sg.Push(),sg.Text('X'),sg.Input(key='x',size=(20,10),default_text='20.00000')],
@@ -306,7 +306,7 @@ while True:
 
     if event=='calculate' \
             and values['ANGLE']==True:
-        Angle_sorter.sorter(angle_elements)
+        Angle_Distribution_Function.sorter(angle_elements)
 
     if event=='calculate' \
             and values['COORD']==True:
