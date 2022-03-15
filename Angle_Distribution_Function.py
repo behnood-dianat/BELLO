@@ -26,18 +26,22 @@ def sorter(elements):
 
     def func_element(elements):
         sorted_list = []
+        trash_collection=[]
         for i in elements:
             for j in elements:
                 for k in elements:
                     name1=i+'-'+j+'-'+k
                     name2=k+'-'+j+'-'+i
                     for x in range(0,lenght):
-                        if file[x][1]==name1 or file[x][1]==name2:
+                        if (file[x][1]==name1 or file[x][1]==name2) and (file[x][1] not in trash_collection):
+
                             sorted_list.append(list(file[x]))
                             temp_list=[i,k]
                             temp_list.sort()
                             name=temp_list[0]+'-'+j+'-'+temp_list[1]
                             condition=True
+                    trash_collection.append(name1)
+                    trash_collection.append(name2)
                     if condition:
                         save_name = name + '.txt'
                         names.append(name)
@@ -54,7 +58,9 @@ def sorter(elements):
     for i in range(0,len(file_names)):
         fig = plt.figure(i,facecolor="none", figsize=(6.75, 5))
         ax = fig.add_subplot(111)
-        #plt.figure(i,figsize=(6.75, 5),facecolor="none")
+        ax.set_ylabel('Distribution (arb. units)',size=14)
+        ax.set_xlabel('Angles (Theta)',size=14)
+
         data = np.loadtxt(pathlib.PurePosixPath(sorted_folder, file_names[i]), dtype="f", usecols=0)
         n, x, patches = ax.hist(x=data,bins=bins,label=names[i],
                                                edgecolor='black',density=True)
